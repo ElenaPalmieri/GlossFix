@@ -20,23 +20,26 @@ db = client.glossProduction
 
 # Fixes the tags that can no longer be edited, but the number of attributes in the tag must be the same
 def turn_attribute_into_list(annotations, tag_id, correct_annotation_id):
-
+    found_model = False
+    model = {}
     for item in annotations:
         if item['_id'] == ObjectId(correct_annotation_id):
             model = item
             annotations.remove(item)
+    if found_model:
+        for item in annotations:
+            for i in range(0, len(model['attributes'])):
+                if isinstance(model['attributes'][i]['value'], list) and not isinstance(item['attributes'][i]['value'], list):
+                    previous_attribute = item['attributes'][i]['value']
+                    item['attributes'][i]['value'] = [previous_attribute]
 
-    for item in annotations:
-        for i in range(0, len(model['attributes'])):
-            if isinstance(model['attributes'][i]['value'], list) and not isinstance(item['attributes'][i]['value'], list):
-                previous_attribute = item['attributes'][i]['value']
-                item['attributes'][i]['value'] = [previous_attribute]
-
-        db.get_collection('Annotations').update({
-                    'task': ObjectId(item['task']),
-                    '_id': ObjectId(item['_id']),
-                    'type': ObjectId(tag_id)},
-                    {'$set': {'attributes': item['attributes']}})
+            db.get_collection('Annotations').update({
+                        'task': ObjectId(item['task']),
+                        '_id': ObjectId(item['_id']),
+                        'type': ObjectId(tag_id)},
+                        {'$set': {'attributes': item['attributes']}})
+    else:
+        print('ERROR: correct annotation not found')
 
 
 
